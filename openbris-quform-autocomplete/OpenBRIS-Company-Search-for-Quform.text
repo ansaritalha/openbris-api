@@ -1,0 +1,77 @@
+OpenBRIS Company Search for Quform - User Documentation
+
+Introduction
+This plugin integrates the OpenBRIS company autocomplete functionality with Quform fields in WordPress. It allows users to easily search for company information such as name, address, city, and VAT number, directly from Quform fields.
+
+Features
+
+Company Autocomplete: Provides real-time search suggestions for company names as users type.
+VAT and Company Details: Auto-fills company information such as VAT number, address, and business ID into relevant fields.
+Dynamic Field Binding: Dynamically links the fetched data to corresponding Quform fields (e.g., VAT number, company ID).
+Admin Settings: Configure API keys and specify which Quform fields are used for company search, VAT, IČO, etc.
+
+Installation
+
+Upload the Plugin: Download and upload the plugin to your WordPress site using the Plugins menu.
+Activate the Plugin: Once uploaded, activate the plugin from the Plugins list.
+
+Frontend Usage
+Once the fields are configured and saved, the autocomplete functionality will be active on your Quform fields with the specified class.
+Users will see suggestions when they start typing a company name in the designated search field.
+When a user selects a company from the suggestions, the company’s information (name, VAT number, address, etc.) will be automatically filled in the corresponding fields in the form.
+How It Works: Code Overview
+1. API Integration:
+The plugin communicates with the OpenBRIS API to retrieve company suggestions based on the user’s query.
+The API request is sent when the user types in the company name field, and results are shown in a dropdown list below the input field.
+2. AJAX Request (Backend):
+When a user enters a query in the search field, the input event triggers an AJAX request to fetch matching company details.
+The request is sent via wp_ajax_fetch_company_suggestions, which retrieves data from the OpenBRIS API and returns it as JSON.
+php
+Copy code
+$response = wp_remote_get($api_url, ['headers' => ['api-key' => $this->api_key]]);
+The data is then returned to the frontend, where it is displayed as a list of suggestions.
+3. Debounce Logic:
+The input is monitored in real-time, but the AJAX request is delayed (debounced) by 300 milliseconds to reduce the number of API requests while typing.
+javascript
+Copy code
+let debounceTimer;
+$(inputSelector).on('input', function () {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        // Send AJAX request
+    }, 300);
+});
+4. Displaying Suggestions:
+The company suggestions are displayed in a dropdown (#company-suggestions), and when the user clicks on a suggestion, the relevant data (name, address, VAT number, etc.) is populated into the form fields.
+javascript
+Copy code
+suggestionsBox.append(
+    $('<li>', {
+        'data-id': company.id,
+        'data-vat': company.vat,
+        html: `<strong>${company.name}</strong><br><small>${company.address}, ${company.city}</small><br><span>IČO: ${company.id}</span>`
+    })
+);
+5. Dynamic Field Updates:
+When a suggestion is selected, it updates various form fields dynamically. For example, the company name is populated in the corresponding field, and the VAT number is inserted into the VAT-related field.
+javascript
+Copy code
+openbrisConfig.company_name_search_classes.forEach(className => {
+    $(`.${className}`).val(companyName);
+});
+6. Admin Settings Page:
+The admin page allows the site administrator to configure the necessary field classes and API key. The settings are stored in the WordPress options table.
+php
+Copy code
+register_setting('openbris_settings', 'company_search_classes');
+Troubleshooting
+Common Issues
+No Suggestions: Ensure that the API key is entered correctly in the settings. Also, verify that the field classes are correctly set up in the Quform fields.
+API Request Failure: If the API request fails, check your internet connection and verify that the OpenBRIS API endpoint is up and running.
+Debugging
+If the plugin isn't working as expected:
+
+Enable WordPress debugging to see error messages.
+Check the Console in your browser’s developer tools for JavaScript errors.
+Conclusion
+The OpenBRIS Company Search for Quform plugin offers seamless integration between OpenBRIS data and Quform, enabling dynamic autocomplete functionality for company searches. By configuring the fields correctly in the settings, you can ensure that all relevant company information, including VAT and business ID, is auto-filled in the form for a smooth user experience.
